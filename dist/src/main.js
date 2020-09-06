@@ -163,8 +163,9 @@ var MSAL = /** @class */ (function () {
                     case 1:
                         _a.sent();
                         _a.label = 2;
-                    case 2:
-                        this.lib.logout();
+                    case 2: return [4 /*yield*/, this.lib.logout()];
+                    case 3:
+                        _a.sent();
                         return [2 /*return*/];
                 }
             });
