@@ -1,6 +1,6 @@
 import _ from "lodash";
-import {default as axios, Method} from "axios";
-import {UserAgentApplicationExtended} from "./UserAgentApplicationExtended";
+import { default as axios, Method } from "axios";
+import { UserAgentApplicationExtended } from "./UserAgentApplicationExtended";
 import {
     Auth,
     Request,
@@ -19,7 +19,7 @@ import {
 
 export class MSAL implements MSALBasic {
     private lib: any;
-    private tokenExpirationTimers: {[key: string]: undefined | number} = {};
+    private tokenExpirationTimers: { [key: string]: undefined | number } = {};
     public data: DataObject = {
         isAuthenticated: false,
         accessToken: '',
@@ -40,9 +40,9 @@ export class MSAL implements MSALBasic {
         navigateToLoginRequestUrl: true,
         requireAuthOnInitialize: false,
         autoRefreshToken: true,
-        onAuthentication: (error, response) => {},
-        onToken: (error, response) => {},
-        beforeSignOut: () => {}
+        onAuthentication: (error, response) => { },
+        onToken: (error, response) => { },
+        beforeSignOut: () => { }
     };
     private readonly cache: CacheOptions = {
         cacheLocation: 'localStorage',
@@ -53,9 +53,9 @@ export class MSAL implements MSALBasic {
     };
     private readonly graph: Graph = {
         callAfterInit: false,
-        endpoints: {profile: '/me'},
+        endpoints: { profile: '/me' },
         baseUrl: 'https://graph.microsoft.com/v1.0',
-        onResponse: (response) => {}
+        onResponse: (response) => { }
     };
     constructor(private readonly options: Options) {
         if (!options.auth.clientId) {
@@ -114,7 +114,7 @@ export class MSAL implements MSALBasic {
         if (this.options.auth.beforeSignOut) {
             await this.options.auth.beforeSignOut(this);
         }
-        this.lib.logout();
+        await this.lib.logout();
     }
     isAuthenticated() {
         return !this.lib.isCallback(window.location.hash) && !!this.lib.getAccount();
@@ -130,10 +130,10 @@ export class MSAL implements MSALBasic {
             // Call acquireTokenRedirect
             if (this.requiresInteraction(error.errorCode)) {
                 this.lib.acquireTokenRedirect(request);
-            } else if(retries > 0) {
+            } else if (retries > 0) {
                 return await new Promise((resolve) => {
                     setTimeout(async () => {
-                        const res = await this.acquireToken(request, retries-1);
+                        const res = await this.acquireToken(request, retries - 1);
                         resolve(res);
                     }, 60 * 1000);
                 })
@@ -147,19 +147,19 @@ export class MSAL implements MSALBasic {
             return;
         }
         let setCallback = false;
-        if(response.tokenType === 'access_token' && this.data.accessToken !== response.accessToken) {
+        if (response.tokenType === 'access_token' && this.data.accessToken !== response.accessToken) {
             this.setToken('accessToken', response.accessToken, response.expiresOn, response.scopes);
             setCallback = true;
         }
-        if(this.data.idToken !== response.idToken.rawIdToken) {
+        if (this.data.idToken !== response.idToken.rawIdToken) {
             this.setToken('idToken', response.idToken.rawIdToken, new Date(response.idToken.expiration * 1000), [this.auth.clientId]);
             setCallback = true;
         }
-        if(setCallback) {
+        if (setCallback) {
             this.saveCallback('auth.onToken', null, response);
         }
     }
-    private setToken(tokenType:string, token: string, expiresOn: Date, scopes: string[]) {
+    private setToken(tokenType: string, token: string, expiresOn: Date, scopes: string[]) {
         const expirationOffset = this.lib.config.system.tokenRenewalOffsetSeconds * 1000;
         const expiration = expiresOn.getTime() - (new Date()).getTime() - expirationOffset;
         if (expiration >= 0) {
@@ -184,7 +184,7 @@ export class MSAL implements MSALBasic {
     }
     // MS GRAPH
     async initialMSGraphCall() {
-        const {onResponse: callback} = this.graph;
+        const { onResponse: callback } = this.graph;
         let initEndpoints = this.graph.endpoints;
 
         if (typeof initEndpoints === 'object' && !_.isEmpty(initEndpoints)) {
@@ -205,7 +205,7 @@ export class MSAL implements MSALBasic {
                     storedIds = Object.keys(storedData);
                     Object.assign(resultsObj, storedData);
                 }
-                const {singleRequests, batchRequests} = this.categorizeRequests(endpoints, _.difference(storedIds, forcedIds));
+                const { singleRequests, batchRequests } = this.categorizeRequests(endpoints, _.difference(storedIds, forcedIds));
                 const singlePromises = singleRequests.map(async endpoint => {
                     const res = {};
                     res[endpoint.id as string] = await this.msGraph(endpoint);
@@ -222,7 +222,7 @@ export class MSAL implements MSALBasic {
                     }
                     Object.assign(resultsObj, res);
                 });
-                const resultsToSave = {...resultsObj};
+                const resultsToSave = { ...resultsObj };
                 forcedIds.map(id => delete resultsToSave[id]);
                 this.lib.store.setItem(`msal.msgraph-${this.data.accessToken}`, JSON.stringify(resultsToSave));
                 this.data.graph = resultsObj;
@@ -246,11 +246,11 @@ export class MSAL implements MSALBasic {
     }
     private async executeBatchRequest(endpoints: Array<string | GraphDetailedObject>, batchUrl = this.graph.baseUrl) {
         const requests = endpoints.map((endpoint, index) => this.createRequest(endpoint, index));
-        const {data} = await axios.request({
+        const { data } = await axios.request({
             url: `${batchUrl}/$batch`,
             method: 'POST' as Method,
-            data: {requests: requests},
-            headers: {Authorization: `Bearer ${this.data.accessToken}`},
+            data: { requests: requests },
+            headers: { Authorization: `Bearer ${this.data.accessToken}` },
             responseType: 'json'
         });
         let result = {};
@@ -281,7 +281,7 @@ export class MSAL implements MSALBasic {
             url: request.url,
             method: request.method as Method,
             responseType: 'json',
-            headers: {Authorization: `Bearer ${this.data.accessToken}`}
+            headers: { Authorization: `Bearer ${this.data.accessToken}` }
         }));
         return {
             status: res.status,
@@ -299,11 +299,11 @@ export class MSAL implements MSALBasic {
         if (endpoint.url) {
             Object.assign(request, endpoint);
         } else {
-            throw ({error: 'invalid endpoint', endpoint: endpoint});
+            throw ({ error: 'invalid endpoint', endpoint: endpoint });
         }
         return request;
     }
-    private categorizeRequests(endpoints: { [id:string]: GraphDetailedObject & { batchUrl?: string } }, excludeIds: string[]): CategorizedGraphRequests {
+    private categorizeRequests(endpoints: { [id: string]: GraphDetailedObject & { batchUrl?: string } }, excludeIds: string[]): CategorizedGraphRequests {
         let res: CategorizedGraphRequests = {
             singleRequests: [],
             batchRequests: {}
@@ -315,7 +315,7 @@ export class MSAL implements MSALBasic {
             };
             if (!_.includes(excludeIds, key)) {
                 if (endpoint.batchUrl) {
-                    const {batchUrl} = endpoint;
+                    const { batchUrl } = endpoint;
                     delete endpoint.batchUrl;
                     if (!res.batchRequests.hasOwnProperty(batchUrl)) {
                         res.batchRequests[batchUrl] = [];
@@ -330,7 +330,7 @@ export class MSAL implements MSALBasic {
     }
     private getEndpointObject(endpoint: string | GraphDetailedObject): GraphDetailedObject {
         if (typeof endpoint === "string") {
-            endpoint = {url: endpoint}
+            endpoint = { url: endpoint }
         }
         if (typeof endpoint === "object" && !endpoint.url) {
             throw new Error('invalid endpoint url')
